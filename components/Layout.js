@@ -1,9 +1,14 @@
 import Head from "next/head";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
+import { Store } from "../utils/Store";
 
 const Layout = ({ title, children }) => {
     const [date, setDate] = useState();
+    const { state, dispatch } = useContext(Store);
+    const { cart } = state;
+
+    console.log(cart);
 
     useEffect(() => {
         setDate(new Date().getFullYear());
@@ -31,11 +36,16 @@ const Layout = ({ title, children }) => {
                             <Link href="/cart">
                                 <a className="p-2 hover:underline decoration-2">
                                     Cart
+                                    {cart.cartItems.length > 0 && (<span className="ml-1 rounded-full bg-red-600 px-2 py-1 text-xs font-bold text-white">
+                                        {cart.cartItems.reduce((a,c)=>a+c.quantity, 0)}
+                                    </span>)}
                                 </a>
                             </Link>
 
                             <Link href="/login">
-                                <a className="p-2 hover:bg-sky-700">Login</a>
+                                <a className="p-2 hover:underline decoration-2">
+                                    Login
+                                </a>
                             </Link>
                         </div>
                     </nav>
@@ -44,10 +54,7 @@ const Layout = ({ title, children }) => {
                 <main className="container m-auto mt-4 px-4">{children}</main>
 
                 <footer className="flex h-10 justify-center items-center shadow-inner">
-                    <p>
-                    Copyright &copy; {date} - next-ahime
-
-                    </p>
+                    <p>Copyright &copy; {date} - next-ahime</p>
                 </footer>
             </div>
         </>

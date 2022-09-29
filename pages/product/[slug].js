@@ -1,11 +1,14 @@
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { useContext } from "react";
+import Image from "next/image";
 
 import Layout from "../../components/Layout";
 import { data } from "../../utils/data";
-import Image from "next/image";
+import { Store } from "../../utils/Store";
 
 const Product = () => {
+    const { state, dispatch } = useContext(Store);
     const { query } = useRouter();
     const { slug } = query;
 
@@ -13,6 +16,21 @@ const Product = () => {
 
     if (!product) {
         return <div className="text-red-400">Product Not Found!</div>;
+    }
+
+    const addToCartHandler = () => {
+        console.log("click confirmed!");
+        const existItem = state.cart.cartItems.find(x => x.slug === slug);
+
+        const quantity = existItem ? existItem.quantity + 1 : 1;
+
+        if (product.countInStock < quantity) {
+            alert("Not enough in stock")
+
+            return;
+        }
+        
+        dispatch({ type: "ADD_ITEM_TO_CART", payload:{...product, quantity} });
     }
 
     return (
@@ -69,7 +87,12 @@ const Product = () => {
                                 )}
                             </div>
                         </div>
-                        <button className="primary-button w-full">add to cart</button>
+                        <button
+                            onClick={addToCartHandler}
+                            className="primary-button w-full"
+                        >
+                            add to cart
+                        </button>
                     </div>
                 </div>
             </div>
