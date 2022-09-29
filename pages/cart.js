@@ -5,6 +5,8 @@ import { XCircleIcon } from "@heroicons/react/24/outline";
 
 import { useRouter } from "next/router";
 
+import dynamic from "next/dynamic";
+
 import Layout from "../components/Layout";
 import { Store } from "../utils/Store";
 
@@ -19,6 +21,12 @@ const Cart = () => {
     const removeItemHandler = (item) => {
         dispatch({ type: "REMOVE_ITEM_FROM_CART", payload: item });
     };
+
+    const updateQtyHandler = (item, qty) => {
+        const quantity = +qty;
+
+        dispatch({ type: "ADD_ITEM_TO_CART", payload:{...item, quantity} });
+    }
 
     return (
         <Layout title="Cart">
@@ -70,7 +78,13 @@ const Cart = () => {
                                         </td>
 
                                         <td className="p-5 text-right">
-                                            {item.quantity}
+                                            <select
+                                            value={item.quantity} onChange={(e)=>updateQtyHandler(item,e.target.value)}
+                                            >
+                                                {[...Array(item.countInStock).keys()].map(x => (
+                                                    <option key={x + 1} value={x + 1}>{x+1}</option>
+                                                ))}
+                                            </select>
                                         </td>
 
                                         <td className="p-5 text-right">
@@ -119,4 +133,4 @@ const Cart = () => {
         </Layout>
     );
 };
-export default Cart;
+export default dynamic(()=>Promise.resolve(Cart), {ssr:false});
