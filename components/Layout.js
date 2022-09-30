@@ -9,7 +9,7 @@ const Layout = ({ title, children }) => {
     const { state, dispatch } = useContext(Store);
     const { cart } = state;
 
-    console.log(cart);
+    // console.log(cart);
 
     useEffect(() => {
         setDate(new Date().getFullYear());
