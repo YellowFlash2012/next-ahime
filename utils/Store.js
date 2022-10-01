@@ -49,6 +49,15 @@ function reducer(state, action) {
             return { ...state, cart: { ...state.cart, cartItems } };
             }
     
+        case 'RESET_CART': {
+            Cookies.remove("cart");
+            return {
+                ...state,
+                cartItems: [],
+                shippingAddress: { location: {} },
+                paymentMethod:""
+            }
+            }
         default:
             return state;
     }

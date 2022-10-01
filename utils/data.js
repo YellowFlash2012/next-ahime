@@ -13,7 +13,7 @@ export const data = {
             name: 'Jane Doe',
             email: "jane-doe@amazon.io",
             password: bcrypt.hashSync('janedoeofamazondotio'),
-            isAdmin:true
+            isAdmin:false
         },
     ],
     products: [
