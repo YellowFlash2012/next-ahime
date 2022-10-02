@@ -26,6 +26,10 @@ a {
   @apply rounded bg-amber-300 py-2 px-4 shadow outline-none mb-4 hover:bg-amber-400 active:bg-amber-700
 }
 
+.default-button {
+  @apply rounded bg-gray-100 py-2 px-4 text-black shadow outline-none hover:bg-gray-200
+}
+
 input, select, textarea {
   @apply rounded border p-2 outline-none ring-indigo-300 focus:ring
 }
