@@ -85,3 +85,4 @@ const Payment = () => {
     );
 };
 export default Payment;
+Payment.auth = true;
