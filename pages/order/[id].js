@@ -1,55 +1,144 @@
+import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import axios from "axios";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useContext, useEffect, useReducer } from "react";
+import { toast } from "react-toastify";
 import Layout from "../../components/Layout";
 import getError from "../../utils/error";
 import { Store } from "../../utils/Store";
 
-function reducer(state,action) {
+function reducer(state, action) {
     switch (action.type) {
         case "FETCH_REQ":
             return { ...state, loading: true, error: "" };
         case "FETCH_SUCCESS":
-            return { ...state, loading: false, error: "", order: action.payload };
+            return {
+                ...state,
+                loading: false,
+                error: "",
+                order: action.payload,
+            };
         case "FETCH_FAIL":
-            return {...state, loading:false, error:action.payload}
-        
-    
+            return { ...state, loading: false, error: action.payload };
+        case "PAY_REQUEST":
+            return { ...state, loadingPay: true };
+        case "PAY_SUCCESS":
+            return { ...state, loadingPay: false, successPay: true };
+        case "PAY_FAIL":
+            return { ...state, loadingPay: false, errorPay: action.payload };
+        case "PAY_RESET":
+            return {
+                ...state,
+                loadingPay: false,
+                successPay: false,
+                errorPay: "",
+            };
+
         default:
             state;
     }
 }
 
 const SingleOrder = () => {
-    
-
-    const {query} = useRouter();
+    const { query } = useRouter();
     const id = query.id;
 
-    const [{ loading, error, order }, dispatch] = useReducer(reducer, { loading: true, order: {}, error: "" });
+    const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
+
+    const [
+        { loading, error, order, successPay, loadingPay, errorPay },
+        dispatch,
+    ] = useReducer(reducer, { loading: true, order: {}, error: "" });
 
     const fetchOrder = async () => {
         try {
-            dispatch({ type: 'FETCH_REQ' });
+            dispatch({ type: "FETCH_REQ" });
 
             const { data } = await axios.get(`/api/orders/${id}`);
 
-            dispatch({type:'FETCH_SUCCESS', payload:data})
+            dispatch({ type: "FETCH_SUCCESS", payload: data });
         } catch (error) {
             dispatch({ type: "FETCH_FAIL", payload: getError(error) });
         }
-    }
+    };
 
     useEffect(() => {
-        if (!order._id || (order._id && order._id !== id)) {
-            fetchOrder()
-            
+        if (!order._id || successPay || (order._id && order._id !== id)) {
+            fetchOrder();
+
+            if (successPay) {
+                dispatch({ type: "PAY_RESET" });
+            }
+        } else {
+            const loadPaypalScript = async () => {
+                const { data: clientID } = await axios.get("/api/keys/paypal");
+
+                console.log(clientID);
+
+                paypalDispatch({
+                    type: "resetOptions",
+                    value: {
+                        "client-id": clientID,
+                        currency: "USD",
+                    },
+                });
+                paypalDispatch({ type: "setLoadingStatus", value: "pending" });
+            };
+
+            loadPaypalScript();
         }
-    }, [id, order])
-    
-    const { shippingAddress, paymentMethod, orderItems, itemsAmount, taxAmount, shippingAmount, totalAmount, isPaid, paidAt, isDelivered, deliveredAt } = order;
+    }, [id, order, paypalDispatch, successPay]);
+
+    const {
+        shippingAddress,
+        paymentMethod,
+        orderItems,
+        itemsAmount,
+        taxAmount,
+        shippingAmount,
+        totalAmount,
+        isPaid,
+        paidAt,
+        isDelivered,
+        deliveredAt,
+    } = order;
+
+    const createOrder = (data, actions) => {
+        return actions.order
+            .create({
+                purchase_units: [
+                    {
+                    amount:{value:totalAmount}
+                }
+            ]
+            })
+            .then(id => {
+            return id
+        })
+    }
+    const onApprove = (data, actions) => {
+        return actions.order.capture().then(async function(details) {
+            try {
+                dispatch({ type: 'PAY_REQUEST' });
+
+                const { data } = await axios.put(`/api/orders/${order._id}/pay`, details);
+
+                dispatch({ type: 'PAY_SUCCESS', payload: data });
+
+                toast.success('Success! Order is paid')
+            } catch (error) {
+                dispatch({ type: 'PAY_FAIL', payload: getError(error) });
+
+                toast.error(getError(error))
+            }
+        })
+    }
+
+    const onError = (error) => {
+        toast.error(getError(error));
+    }
 
     return (
         <Layout title={`Order ${id}`}>
@@ -174,13 +263,30 @@ const SingleOrder = () => {
                                         <div>${shippingAmount}</div>
                                     </div>
                                 </li>
-                                
-                                        <li>
+
+                                <li>
                                     <div className="mb-2 flex justify-between">
                                         <div>Total</div>
                                         <div>${totalAmount}</div>
                                     </div>
                                 </li>
+
+                                {!isPaid && (
+                                    <li>
+                                        {isPending ? (
+                                            <div>Loading...</div>
+                                        ) : (
+                                            <div className="w-full">
+                                                <PayPalButtons
+                                                    createOrder={createOrder}
+                                                    onApprove={onApprove}
+                                                    onError={onError}
+                                                ></PayPalButtons>
+                                            </div>
+                                        )}
+                                        {loadingPay && <div>Loading...</div>}
+                                    </li>
+                                )}
                             </ul>
                         </div>
                     </div>
@@ -191,4 +297,4 @@ const SingleOrder = () => {
 };
 export default SingleOrder;
 
-SingleOrder.auth=true
+SingleOrder.auth = true;

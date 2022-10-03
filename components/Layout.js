@@ -15,7 +15,7 @@ import DropdownLink from "./DropdownLink";
 const Layout = ({ title, children }) => {
     const { status, data: session } = useSession();
 
-    console.log(session);
+    // console.log(session);
 
     const [date, setDate] = useState();
     const [cartItemsCount, setCartItemsCount] = useState(0);

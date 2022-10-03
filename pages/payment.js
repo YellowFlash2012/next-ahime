@@ -52,7 +52,7 @@ const Payment = () => {
             <form className="mx-auto max-w-screen-md" onSubmit={paymentHandler}>
                 <h1 className="mb-4 text-xl">Payment Method</h1>
 
-                {["Bitcoin", "Stripe", "CashOnDelivery"].map((payment) => (
+                {["Paypal", "Stripe", "CashOnDelivery"].map((payment) => (
                     <div key={payment} className="mb-4">
                         <input
                             className="p-2 outline-none focus:ring-0"
