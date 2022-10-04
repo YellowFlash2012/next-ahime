@@ -1,5 +1,6 @@
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import axios from "axios";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -22,6 +23,7 @@ function reducer(state, action) {
             };
         case "FETCH_FAIL":
             return { ...state, loading: false, error: action.payload };
+
         case "PAY_REQUEST":
             return { ...state, loadingPay: true };
         case "PAY_SUCCESS":
@@ -36,19 +38,35 @@ function reducer(state, action) {
                 errorPay: "",
             };
 
+        case "DELIVER_REQUEST":
+            return { ...state, loadingDeliver: true };
+        case "DELIVER_SUCCESS":
+            return { ...state, loadingDeliver: false, successDeliver: true };
+        case "DELIVER_FAIL":
+            return { ...state, loadingDeliver: false };
+        case "DELIVER_RESET":
+            return {
+                ...state,
+                loadingDeliver: false,
+                successDeliver: false,
+                
+            };
+
         default:
             state;
     }
 }
 
 const SingleOrder = () => {
+    const { data: session } = useSession();
+
     const { query } = useRouter();
     const id = query.id;
 
     const [{ isPending }, paypalDispatch] = usePayPalScriptReducer();
 
     const [
-        { loading, error, order, successPay, loadingPay, errorPay },
+        { loading, error, order, successPay, loadingPay, loadingDeliver, successDeliver },
         dispatch,
     ] = useReducer(reducer, { loading: true, order: {}, error: "" });
 
@@ -65,11 +83,15 @@ const SingleOrder = () => {
     };
 
     useEffect(() => {
-        if (!order._id || successPay || (order._id && order._id !== id)) {
+        if (!order._id || successPay || successDeliver || (order._id && order._id !== id)) {
             fetchOrder();
 
             if (successPay) {
                 dispatch({ type: "PAY_RESET" });
+            }
+
+            if (successDeliver) {
+                dispatch({ type: "DELIVER_RESET" });
             }
         } else {
             const loadPaypalScript = async () => {
@@ -89,7 +111,7 @@ const SingleOrder = () => {
 
             loadPaypalScript();
         }
-    }, [id, order, paypalDispatch, successPay]);
+    }, [id, order, paypalDispatch, successPay, successDeliver]);
 
     const {
         shippingAddress,
@@ -138,6 +160,22 @@ const SingleOrder = () => {
 
     const onError = (error) => {
         toast.error(getError(error));
+    }
+
+    const deliverOrderByAdminHandler = async () => {
+        try {
+            dispatch({ type: "DELIVER_REQ" });
+
+            const { data } = await axios.put(`/api/admin/orders/${order._id}/deliver`, {});
+
+            dispatch({ type: "DELIVER_SUCCESS", payload: data });
+
+            toast.success('Order is delivered')
+        } catch (error) {
+            dispatch({ type: "DELIVER_FAIL", payload: getError(error) });
+
+            toast.error(getError(error))
+        }
     }
 
     return (
@@ -287,6 +325,25 @@ const SingleOrder = () => {
                                         {loadingPay && <div>Loading...</div>}
                                     </li>
                                 )}
+
+                                {session.user.isAdmin &&
+                                    order.isPaid &&
+                                    !order.isDelivered && (
+                                        <li>
+                                            {loadingDeliver && (
+                                                <div>Loading...</div>
+                                            )}
+
+                                            <button
+                                                className="primary-button w-full"
+                                                onClick={
+                                                    deliverOrderByAdminHandler
+                                                }
+                                            >
+                                                Deliver Order
+                                            </button>
+                                        </li>
+                                    )}
                             </ul>
                         </div>
                     </div>

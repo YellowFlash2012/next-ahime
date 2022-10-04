@@ -98,12 +98,12 @@ const Orders = () => {
                                             
                                             <td className="p-5">${order.totalAmount}</td>
                                             
-                                            <td className="p-5">{order.isPaid ? `${order.paidAt.substring(0,10)}`:'not paid'}</td>
+                                            <td className="p-5">{order.isPaid ? `${order.paidAt?.substring(0,10)}`:'not paid'}</td>
                                             
                                             <td className="p-5">{order.isDelivered ? `${order.deliveredAt.substring(0, 10)}` : 'not delivered'}</td>
 
                                             <td className="p-5">
-                                                <Link href={`/order/order._id`} passHref>
+                                                <Link href={`/order/${order._id}`} passHref>
                                                     <a>Details</a>
                                                 </Link>
                                             </td>
