@@ -16,8 +16,10 @@ const handler = async (req, res) => {
         return getHandler(req, res, user);
     } else if (req.method === "PUT") {
         return putHandler(req, res, user);
+    } else if (req.method === "DELETE") {
+        return deleteHandler(req, res);
     } else {
-        return res.status(400).send("Method not allowed on this route")
+        return res.status(400).send("Method not allowed on this route");
     }
 
     
@@ -59,5 +61,13 @@ const putHandler = async (req, res) => {
         res.status(404).send("Product NOT found!");
     }
 };
+
+const deleteHandler = async (req, res) => {
+    await db.connect()
+
+    await Product.findByIdAndDelete(req.query.id);
+
+    res.send("Done, product deleted!")
+}
 
 export default handler

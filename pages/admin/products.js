@@ -1,6 +1,8 @@
 import axios from "axios";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { useEffect, useReducer } from "react";
+import { toast } from "react-toastify";
 import Layout from "../../components/Layout";
 import getError from "../../utils/error";
 
@@ -20,13 +22,57 @@ function reducer(state, action) {
         case "FETCH_FAIL":
             return { ...state, loading: false, error: action.payload };
 
+        case "ADD_NEW_PRODUCT_REQ":
+            return { ...state, loadingAddNew: true, errorAddNew: "" };
+
+        case "ADD_NEW_PRODUCT_SUCCESS":
+            return {
+                ...state,
+                loadingAddNew: false,
+
+                errorAddNew: "",
+            };
+
+        case "ADD_NEW_PRODUCT_FAIL":
+            return {
+                ...state,
+                loadingAddNew: false,
+                errorAddNew: action.payload,
+            };
+        
+        case "DELETE_REQ":
+            return { ...state, loadingDelete: true };
+
+        case "DELETE_SUCCESS":
+            return {
+                ...state,
+                loadingDelete: false,
+
+                successDelete: true,
+            };
+
+        case "DELETE_FAIL":
+            return {
+                ...state,
+                loadingDelete: false,
+            
+            };
+        
+        case "DELETE_RESET":
+            return {...state, loadingDelete:false, successDelete:false}
+
         default:
             state;
     }
 }
 
 const Products = () => {
-    const [{ loading, error, products }, dispatch] = useReducer(reducer, {
+    const router = useRouter();
+
+    const [
+        { loading, error, products, loadingAddNew, loadingDelete, successDelete },
+        dispatch,
+    ] = useReducer(reducer, {
         loading: true,
         products: [],
         error: "",
@@ -45,8 +91,54 @@ const Products = () => {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (successDelete) {
+            dispatch({ type: "DELETE_RESET" });
+        } else {
+            fetchData();
+        }
+    }, [successDelete]);
+
+    const deleteProductHandler = async (id) => {
+        if (!window.confirm("Are you sure?")) {
+            return;
+        }
+
+        try {
+            dispatch({ type: "DELETE_REQ" });
+
+            await axios.delete(`/api/admin/products/${id}`);
+
+            dispatch({ type: "DELETE_SUCCESS" });
+
+            toast.success('Done, product deleted!')
+        } catch (error) {
+            dispatch({ type: "DELETE_FAIL" });
+
+            toast.error(getError(error))
+        }
+    }
+
+    const addNewProductHandler = async () => {
+        if (!window.confirm("Are you sure?")) {
+            return;
+        }
+        try {
+            dispatch({ type: "ADD_NEW_PRODUCT_REQ" });
+            
+            const { data } = await axios.post("/api/admin/products");
+            
+            dispatch({ type: "ADD_NEW_PRODUCT_SUCCESS" });
+
+            toast.success("Success! New product created")
+
+            router.push(`/admin/product/${data._id}`)
+
+        } catch (error) {
+            dispatch({ type: "ADD_NEW_PRODUCT_FAIL", payload: getError(error) })
+            
+            toast.error(getError(error))
+        }
+    }
 
     return (
         <Layout title="Admin Products List">
@@ -73,7 +165,19 @@ const Products = () => {
                 </div>
 
                 <div className="overflow-x-auto md:col-span-3">
-                    <h1 className="mb-4 text-xl">Products</h1>
+                    <div className="flex justify-between">
+                        <h1 className="mb-4 text-xl">Products</h1>
+
+                        {loadingDelete && <div>Deleting product...</div>}
+
+                        <button
+                            className="primary-button"
+                            disabled={loadingAddNew}
+                            onClick={addNewProductHandler}
+                        >
+                            {loadingAddNew ? "Loading..." : "Add New Product"}
+                        </button>
+                    </div>
 
                     {loading ? (
                         <div>Loading...</div>
@@ -138,7 +242,14 @@ const Products = () => {
                                                     <a>Edit</a>
                                                 </Link>
                                                 &nbsp;
-                                                <button className="primary-button">
+                                                <button
+                                                    className="primary-button"
+                                                    onClick={() =>
+                                                        deleteProductHandler(
+                                                            product._id
+                                                        )
+                                                    }
+                                                >
                                                     Delete
                                                 </button>
                                             </td>
