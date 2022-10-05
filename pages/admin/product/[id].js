@@ -15,6 +15,24 @@ function reducer(state, action) {
             return { ...state, loading: false, error: "" };
         case "FETCH_FAIL":
             return {...state, loading:false, error:action.payload}
+        
+        case 'UPDATE_REQ':
+            return { ...state, loadingUpdate: true, errorUpdate: "" };
+        case 'UPDATE_SUCCESS':
+            return { ...state, loadingUpdate: false, errorUpdate: "" };
+        case "UPDATE_FAIL":
+            return {
+                ...state,
+                loadingUpdate: false,
+                errorUpdate: action.payload,
+            };
+        
+        case 'UPLOAD_REQ':
+            return { ...state, loadingUpload: true, errorUpload: "" };
+        case 'UPLOAD_SUCCESS':
+            return { ...state, loadingUpload: false, errorUpload: "" };
+        case "UPLOAD_FAIL":
+            return {...state, loadingUpload:false, errorUpload:action.payload}
     
         default:
             return state;
@@ -27,7 +45,7 @@ const ProductEditByAdmin = () => {
 
     const productID = query.id;
 
-    const [{ loading, error, loadingUpdate }, dispatch] = useReducer(reducer, { loading: true, error: "" });
+    const [{ loading, error, loadingUpdate, loadingUpload }, dispatch] = useReducer(reducer, { loading: true, error: "" });
 
     const { register, handleSubmit, formState: { errors }, setValue } = useForm();
 
@@ -56,7 +74,41 @@ const ProductEditByAdmin = () => {
         fetchData()
     }, [productID, setValue])
 
-    const editProductHandler = async ({ name, slug, price, category, image, featuredImage, brand, countInStock, description }) => {
+    const uploadImageHandler = async (e, imageField = 'image') => {
+        const url = `https://api/cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`;
+
+        try {
+            dispatch({ type: "UPLOAD_REQ" });
+
+            const { data: { signature, timestamp } } = await axios.get("/api/admin/cloudinary-sign");
+
+            const file = e.target.files[0];
+
+            const formData = new FormData();
+
+            formData.append('file', file);
+            formData.append("signature", signature);
+            formData.append("timestamp", timestamp);
+            formData.append(
+                "api_key",
+                process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY
+            );
+
+            const { data } = await axios.post(url, formData);
+
+            dispatch({ type: UPLOAD_SUCCESS });
+
+            setValue(imageField, data.secure_url);
+
+            toast.success("Success! Your file was uploaded")
+        } catch (error) {
+            dispatch({ type: "UPLOAD_FAIL", payload: getError(error) });
+
+            toast.error(getError(error));
+        }
+    }
+
+    const editProductHandler = async ({ name, slug, price, category, image, brand, countInStock, description }) => {
         try {
             dispatch({ type: "UPDATE_REQ" });
 
@@ -66,7 +118,7 @@ const ProductEditByAdmin = () => {
                 price,
                 category,
                 image,
-                featuredImage,
+
                 brand,
                 countInStock,
                 description,
@@ -78,7 +130,9 @@ const ProductEditByAdmin = () => {
 
             router.push('/admin/products')
         } catch (error) {
-            dispatch({ type: "UPDATE_FAIL", payload:getError(error) });
+            dispatch({ type: "UPDATE_FAIL", payload: getError(error) });
+            
+            toast.error(getError(error));
         }
     }
     
@@ -114,7 +168,7 @@ const ProductEditByAdmin = () => {
                     ) : (
                         <form
                             className="mx-auto max-w-screen-md"
-                            onSubmit={editProductHandler}
+                            onSubmit={handleSubmit(editProductHandler)}
                         >
                             <h1 className="mb-4 text-xl">{`Edit product ${productID}`}</h1>
 
@@ -196,6 +250,22 @@ const ProductEditByAdmin = () => {
                             </div>
 
                             <div className="mb-4">
+                                <label htmlFor="imageFile">
+                                    Upload Image File
+                                </label>
+
+                                <input
+                                    type="file"
+                                    name="imageFile"
+                                    id="imageFile"
+                                    className="w-full"
+                                    onChange={uploadImageHandler}
+                                />
+
+                                        {loadingUpload && <div>Uploading...</div>}
+                            </div>
+
+                            <div className="mb-4">
                                 <label htmlFor="category">Category</label>
                                 <input
                                     type="text"
@@ -274,13 +344,18 @@ const ProductEditByAdmin = () => {
                                         {errors.countInStock.message}
                                     </div>
                                 )}
-                                    </div>
-                                    
-                                    <div className="mb-4">
-                                        <button className="primary-button" disabled={loadingUpdate}>
-                                            {loadingUpdate?"loading...":"Update Product"}
-                                        </button>
-                                    </div>
+                            </div>
+
+                            <div className="mb-4">
+                                <button
+                                    className="primary-button"
+                                    disabled={loadingUpdate}
+                                >
+                                    {loadingUpdate
+                                        ? "loading..."
+                                        : "Update Product"}
+                                </button>
+                            </div>
                         </form>
                     )}
                 </div>
