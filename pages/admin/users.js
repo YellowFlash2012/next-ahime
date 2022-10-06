@@ -2,6 +2,7 @@ import axios from "axios";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect, useReducer } from "react";
+import { BeatLoader } from "react-spinners";
 import { toast } from "react-toastify";
 import Layout from "../../components/Layout";
 import getError from "../../utils/error";
@@ -122,7 +123,9 @@ const Users = () => {
                     {loadingDelete && <div>Deleting user...</div>}
 
                     {loading ? (
-                        <div>Loading...</div>
+                        <div>
+                            <BeatLoader color="#36d7b7" />
+                        </div>
                     ) : error ? (
                         <div className="alert-error">{error}</div>
                     ) : (

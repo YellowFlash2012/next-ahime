@@ -3,7 +3,9 @@ import Link from "next/link";
 
 import { Bar } from "react-chartjs-2";
 
-import {Chart as ChartJS,CategoryScale,LinearScale,BarElement,Title,Tooltip,Legend} from 'chart.js'
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js'
+
+import { BeatLoader } from "react-spinners";
 
 import { useEffect, useReducer } from "react";
 import Layout from "../../components/Layout";
@@ -97,35 +99,53 @@ const Dashboard = () => {
                 <div className="md:col-span-3">
                     <h1 className="mb-4 text-xl">Admin Dashboard</h1>
 
-                    {loading ? <div>Loading...</div> : error ? <div className="alert-error">{error}</div> : (
+                    {loading ? (
+                        <div>
+                            <BeatLoader color="#36d7b7" />
+                        </div>
+                    ) : error ? (
+                        <div className="alert-error">{error}</div>
+                    ) : (
                         <div>
                             <div className="grid grid-cols-1 md:grid-cols-4">
                                 <div className="card m-5 p-5">
-                                    <p className="text-3xl">${summary.ordersAmount}</p>
+                                    <p className="text-3xl">
+                                        ${summary.ordersAmount}
+                                    </p>
 
                                     <p>Sales</p>
 
                                     <Link href="/admin/orders">View Sales</Link>
                                 </div>
-                                
+
                                 <div className="card m-5 p-5">
-                                    <p className="text-3xl">{summary.ordersCount}</p>
+                                    <p className="text-3xl">
+                                        {summary.ordersCount}
+                                    </p>
 
                                     <p>Orders</p>
 
-                                    <Link href="/admin/orders">View Orders</Link>
+                                    <Link href="/admin/orders">
+                                        View Orders
+                                    </Link>
                                 </div>
-                                
+
                                 <div className="card m-5 p-5">
-                                    <p className="text-3xl">{summary.productsCount}</p>
+                                    <p className="text-3xl">
+                                        {summary.productsCount}
+                                    </p>
 
                                     <p>Products</p>
 
-                                    <Link href="/admin/products">View Products</Link>
+                                    <Link href="/admin/products">
+                                        View Products
+                                    </Link>
                                 </div>
-                                
+
                                 <div className="card m-5 p-5">
-                                    <p className="text-3xl">{summary.usersCount}</p>
+                                    <p className="text-3xl">
+                                        {summary.usersCount}
+                                    </p>
 
                                     <p>Users</p>
 
@@ -135,14 +155,17 @@ const Dashboard = () => {
 
                             <h2 className="text-xl">Sales report</h2>
 
-                            <Bar options={{
-                                legend:{display:true,position:'right'}
-                            }}
+                            <Bar
+                                options={{
+                                    legend: {
+                                        display: true,
+                                        position: "right",
+                                    },
+                                }}
                                 data={data}
                             />
                         </div>
-                    )
-                    }
+                    )}
                 </div>
             </div>
         </Layout>
