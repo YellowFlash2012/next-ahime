@@ -239,19 +239,27 @@ const Products = () => {
                                                     href={`/admin/product/${product._id}`}
                                                     passHref
                                                 >
-                                                    <a>Edit</a>
+                                                    <a
+                                                        type="button"
+                                                        className="default-button"
+                                                    >
+                                                        Edit
+                                                    </a>
                                                 </Link>
                                                 &nbsp;
-                                                <button
-                                                    className="primary-button"
-                                                    onClick={() =>
-                                                        deleteProductHandler(
-                                                            product._id
-                                                        )
-                                                    }
-                                                >
-                                                    Delete
-                                                </button>
+                                                <Link href="#">
+                                                    <a
+                                                        onClick={() =>
+                                                            deleteProductHandler(
+                                                                product._id
+                                                            )
+                                                        }
+                                                        type="button"
+                                                        className="default-button"
+                                                    >
+                                                        Delete
+                                                    </a>
+                                                </Link>
                                             </td>
                                         </tr>
                                     ))}
